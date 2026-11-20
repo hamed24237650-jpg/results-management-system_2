@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدارة النتائج</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>body{background:#f2f4f7;font-family:'Segoe UI',sans-serif}h1{color:#0d6efd;font-weight:bold}.card{border-radius:15px;border:none}</style>
+</head>
+<body>
+<div class="container my-5">
+<h1 class="text-center mb-4">🎓 نظام إدارة النتائج</h1>
+<div class="card p-4 shadow-sm mb-4">
+<div class="row g-3">
+<div class="col-md-6"><label>اسم الطالب</label><input type="text" id="studentName" class="form-control"></div>
+<div class="col-md-6"><label>نسبة الحضور %</label><input type="number" id="attendance" class="form-control"></div>
+<div class="col-md-4"><label>درجة المادة الأولى</label><input type="number" id="grade1" class="form-control"></div>
+<div class="col-md-4"><label>درجة المادة الثانية</label><input type="number" id="grade2" class="form-control"></div>
+<div class="col-md-4"><label>درجة المادة الثالثة</label><input type="number" id="grade3" class="form-control"></div>
+</div>
+<div class="d-flex gap-2 mt-4">
+<button id="addBtn" class="btn btn-primary flex-fill">إضافة طالب</button>
+<button id="rafaBtn" class="btn btn-success flex-fill">تفعيل لجنة الرأفة</button>
+</div>
+</div>
+<div id="errorBox" class="alert alert-danger d-none"></div>
+<div class="card p-4 shadow-sm mb-4"><h4>قائمة الطلاب</h4><div id="studentsListDiv"><p class="text-muted">لم يتم إضافة أي طالب بعد.</p></div></div>
+<div class="card p-4 shadow-sm"><h4>التقرير النهائي للجنة الرأفة</h4><div id="reportDiv"><p class="text-muted">اضغط على تفعيل لجنة الرأفة لعرض التقرير.</p></div></div>
+<footer class="text-center mt-5 py-3 bg-white rounded shadow-sm"><p class="mb-1 fw-bold">تم تنفيذ المشروع بواسطة</p><p class="mb-0 text-primary fs-5">حامد مصطفى حامد أحمد عبدالحافظ</p><small class="text-muted">تكليف عملي 3 - نظام إدارة النتائج | JavaScript</small></footer>
+</div>
+<script>
+class Student{
+#name;#grades;#attendance;
+constructor(name,g1,g2,g3,attendance){this.name=name;this.grades=[g1,g2,g3];this.attendance=attendance;}
+set name(v){if(!v||v.trim()==="")throw new Error("⚠️ من فضلك أدخل اسم الطالب.");this.#name=v.trim();}
+get name(){return this.#name;}
+set grades(arr){for(let g of arr){if(g===""||g==null||isNaN(g))throw new Error("⚠️ من فضلك املأ جميع الدرجات.");g=Number(g);if(g<0||g>100)throw new Error("⚠️ الدرجة يجب أن تكون بين 0 و 100.");}this.#grades=arr.map(Number);}
+get grades(){return this.#grades;}
+set attendance(v){if(v===""||v==null||isNaN(v))throw new Error("⚠️ من فضلك أدخل نسبة الحضور.");v=Number(v);if(v<0||v>100)throw new Error("⚠️ نسبة الحضور يجب أن تكون بين 0 و 100.");this.#attendance=v;}
+get attendance(){return this.#attendance;}
+getAverage(){return this.#grades.reduce((a,b)=>a+b,0)/this.#grades.length;}
+}
+let studentsList=[];
+const nameInput=document.getElementById("studentName"),g1Input=document.getElementById("grade1"),g2Input=document.getElementById("grade2"),g3Input=document.getElementById("grade3"),attendanceInput=document.getElementById("attendance"),addBtn=document.getElementById("addBtn"),rafaBtn=document.getElementById("rafaBtn"),errorBox=document.getElementById("errorBox"),studentsListDiv=document.getElementById("studentsListDiv"),reportDiv=document.getElementById("reportDiv");
+function showError(m){errorBox.textContent=m;errorBox.classList.remove("d-none");}
+function hideError(){errorBox.textContent="";errorBox.classList.add("d-none");}
+function renderStudents(){if(studentsList.length===0){studentsListDiv.innerHTML=`<p class="text-muted">لم يتم إضافة أي طالب بعد.</p>`;return;}studentsListDiv.innerHTML=studentsList.map((s,i)=>`<div class="d-flex justify-content-between border-bottom py-2"><span><b>${i+1}. ${s.name}</b></span><span>المتوسط: ${s.getAverage().toFixed(2)} | الحضور: ${s.attendance}%</span></div>`).join("");}
+addBtn.onclick=function(){try{hideError();const st=new Student(nameInput.value,g1Input.value,g2Input.value,g3Input.value,attendanceInput.value);studentsList.push(st);renderStudents();nameInput.value="";g1Input.value="";g2Input.value="";g3Input.value="";attendanceInput.value="";}catch(e){showError(e.message);}};
+rafaBtn.onclick=function(){hideError();if(studentsList.length===0){reportDiv.innerHTML=`<div class="alert alert-warning">لا يوجد طلاب.</div>`;return;}const struggling=studentsList.filter(s=>{let a=s.getAverage();return a>=40&&a<=49;});if(struggling.length===0){reportDiv.innerHTML=`<div class="alert alert-info">لا يوجد طلاب متعثرون (40 - 49).</div>`;return;}const after=struggling.map(s=>({name:s.name,oldAvg:s.getAverage(),newAvg:s.getAverage()+5}));const total=after.reduce((sum,s)=>sum+s.newAvg,0);const avg=after.length>0?(total/after.length):0;reportDiv.innerHTML=`<div class="alert alert-success"><h5>✅ تم تفعيل لجنة الرأفة</h5><p><b>عدد الطلاب المتعثرين:</b> ${struggling.length}</p><p><b>المتوسط العام بعد الرأفة:</b> ${avg.toFixed(2)}</p></div><table class="table table-striped"><thead><tr><th>الاسم</th><th>قبل</th><th>بعد +5</th></tr></thead><tbody>${after.map(s=>`<tr><td>${s.name}</td><td>${s.oldAvg.toFixed(2)}</td><td><b>${s.newAvg.toFixed(2)}</b></td></tr>`).join("")}</tbody></table>`;};
+</script>
+</body>
+</html>
